@@ -1,0 +1,5 @@
+{
+  "id": "1421",
+  "title": "Invoice export drops line items with zero quantity",
+  "body": "Scope: packages/billing/invoices\n\nRepro: create an invoice with a line item that has quantity=0 (e.g. a fully-refunded item), then export it to CSV via /billing/invoices/:id/export. The exported CSV silently omits that line item.\n\nExpected: every line item on the invoice appears in the export, including zero-quantity ones - their subtotal is 0 but they still represent a real adjustment for accounting.\n\nActual: the export filters out any line item where quantity === 0, so accounting can't reconcile the invoice against the export.\n\nAcceptance criteria: exporting an invoice with a zero-quantity line item includes that line item in the CSV output with its correct (zero) subtotal."
+}
