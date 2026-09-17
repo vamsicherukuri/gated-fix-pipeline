@@ -3,7 +3,7 @@ name: architect
 description: Turns a ready, scoped issue into a technical + impact spec - no code. Bounded to the declared scope plus one hop of callers/importers.
 tools: ["read", "search"]
 disable-model-invocation: true
-user-invocable: false
+user-invocable: true
 metadata:
   stage: "02"
   cost_tier: medium

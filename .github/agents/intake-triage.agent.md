@@ -3,7 +3,7 @@ name: intake-triage
 description: Checks a filed issue against a Definition of Ready (repro/acceptance criteria + declared scope) before any planning work begins. Never touches the repo.
 tools: []
 disable-model-invocation: true
-user-invocable: false
+user-invocable: true
 metadata:
   stage: "01.5"
   cost_tier: low
