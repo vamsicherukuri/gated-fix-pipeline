@@ -1,100 +1,182 @@
-# Gated Fix Pipeline
+# Gated Change — GitHub Copilot App Enterprise Challenge
 
-Narrow-slice implementation for the GitHub Copilot App Enterprise Challenge submission. This is Steps
-01 through 03 of the eleven-step design in [implementation-plan.md](implementation-plan.md) — Issue
-filed → Intake Triage → Plan drafted → Scope gate — built and type-checked against the real
-[`@github/copilot-sdk`](https://github.com/github/copilot-sdk), not a mock.
+This repository implements the workflow designed in [`implementation-plan.md`](implementation-plan.md) as a **GitHub Copilot App-native, governed issue-to-PR pattern**.
 
-See [implementation-plan.md](implementation-plan.md) for the full design rationale and
-[the workflow diagram artifact](https://claude.ai/artifact/P99xeczGaacExSXJp7mVhp) for the visual map
-of all eleven steps, agent roles, and decision playbook.
+The project began as a narrow SDK proof of concept called **Gated Fix Pipeline**. That prototype is intentionally retained under `.github/agents/` and `src/` because it contains useful working examples of bounded control flow and deterministic scope checks. The **customer-facing challenge implementation now lives under `plugins/gated-change/`** and is intended to run inside the GitHub Copilot App.
 
-## What's real here vs. what's a stand-in
+## Source of truth
 
-**Real, working, type-checked against the installed SDK:**
-- `.agent.md` custom agent definitions ([.github/agents/](.github/agents/)) using the documented frontmatter
-  schema — this location is required for GitHub Copilot's cloud agent / GHCP App to discover them (see
-  "Testing via the GitHub Copilot App" below).
-- The orchestrator ([src/orchestrator.ts](src/orchestrator.ts)) drives one `CopilotClient` session per
-  agent stage — a deliberate choice, not a limitation: it keeps each stage's tool access cleanly
-  separable for the permissions/audit story in implementation-plan.md §7, rather than one shared
-  session where scoping is harder to prove.
-- The scope-enforcement tool ([src/scopeTool.ts](src/scopeTool.ts)) — a real, working example of the
-  "enforced boundary, not a prompt instruction" pattern from §5b/§6. It blocks reads outside the
-  declared scope at the tool layer.
-- The bounded round caps (`INTAKE_TRIAGE_MAX_ROUNDS`, `SCOPE_GATE_MAX_ROUNDS` in
-  [src/types.ts](src/types.ts)) — enforced in the orchestrator's control flow, not left to the model.
-- The Scope gate ([src/scopeGate.ts](src/scopeGate.ts)) — a genuine blocking `stdin` prompt. Nothing
-  proceeds past it without a real keypress.
+[`implementation-plan.md`](implementation-plan.md) is the authoritative workflow/design specification.
 
-**Stand-ins, called out explicitly rather than silently faked:**
-- The Scope gate's approval UI is a CLI prompt here. In the real GHCP App surface this would be
-  whatever native approval UI the platform provides — the important property (execution actually
-  pauses on a human) is preserved either way.
-- Intake Triage's clarification loop simulates the "post a comment, wait for a reply" round-trip with
-  a single in-process re-prompt (see the comment in `runIntakeTriage`) — the routing decision itself
-  (GitHub issue comments vs. a PM prompt) is still explicitly deferred per implementation-plan.md §4.
-- Architect's scope-bounded search only enforces the declared-scope boundary; the "one hop of
-  importers/callers" search described in its system prompt is not yet implemented as a real grep —
-  the agent is instructed to do this itself via its own reasoning for now.
-- Steps 04–10 (branch, implementation, tests, review, merge, release) are fully designed in
-  implementation-plan.md §5b–§5h but not yet built here.
+It defines the eleven functional stages, two hard human gates, bounded retry/clarification loops, agent permission boundaries, monorepo handling, deterministic-vs-LLM decisions, and token-efficiency principles. The plugin implementation must follow that document rather than silently simplifying the design.
 
-## Roles
+## Target workflow
 
-| Role | Responsibility | Where |
-|---|---|---|
-| Reporter (non-dev) | Files the issue in plain language | outside this repo (GitHub issue) |
-| Intake Triage (agent) | Checks the issue is ready and scoped before anything expensive runs | [.github/agents/intake-triage.agent.md](.github/agents/intake-triage.agent.md) |
-| Architect (agent) | Drafts a technical + impact spec, no code | [.github/agents/architect.agent.md](.github/agents/architect.agent.md) |
-| PM (non-dev, human) | Approves, requests revision, or sends back the plan at the Scope gate | via `askScopeGate` in [src/scopeGate.ts](src/scopeGate.ts) |
-
-## Prerequisites
-
-- Node.js 22+ and npm.
-- A GitHub Copilot subscription (or BYOK provider config — see the SDK's
-  [auth docs](https://github.com/github/copilot-sdk/blob/main/docs/auth/README.md)). Without this, the
-  orchestrator will fail at `client.start()` / the first `createSession` call.
-
-## Setup
-
-```bash
-npm install
-npm run build   # type-checks the orchestrator against the installed SDK
+```text
+GitHub Issue
+    |
+    v
+Intake Triage
+(issue context only)
+    |
+    v
+Architect
+(read/search, no writes)
+    |
+    v
+HUMAN SCOPE GATE
+    |
+    v
+Isolated App session / worktree
+    |
+    v
+Developer
+(fix + regression tests)
+    |
+    v
+QA
+(validate original acceptance criteria)
+    |
+    v
+Reviewer
+(read-only risk/quality flags)
+    |
+    v
+GitHub PR + native CI
+    |
+    v
+HUMAN MERGE GATE
+Dev technical review -> PM business/scope review
+    |
+    v
+Release-helper / post-merge handling
+(planned later milestone)
 ```
 
-## Running it
+## Repository layout
 
-```bash
-npm run run:ready   # a well-formed, scoped issue - should sail through Intake Triage in round 1
-npm run run:vague   # a vague issue - demonstrates the bounded clarification loop
+### App-native challenge implementation
+
+```text
+.github/plugin/marketplace.json
+plugins/gated-change/
+  plugin.json
+  com.github.copilot/agents/
+    gated-change-controller.agent.md
+    gated-change-intake.agent.md
+    gated-change-architect.agent.md
+    gated-change-developer.agent.md
+    gated-change-qa.agent.md
+    gated-change-reviewer.agent.md
+  skills/gated-change/SKILL.md
 ```
 
-Both commands read a JSON issue fixture from [examples/](examples/) and drive it through Steps 01–03,
-pausing at the Scope gate for a real approve / revise / send-back response on stdin.
+The plugin is the reusable field/customer pattern. It packages the workflow guidance and specialist agents for use in the GitHub Copilot App.
 
-## Governance considerations
+### Existing SDK prototype / test harness
 
-- No agent has write access anywhere in this slice — Architect is read-only, bounded to the declared
-  scope, and Intake Triage never touches the repo at all. Write-scope enforcement for the Developer
-  agent (§5b) is designed but arrives with Step 05.
-- The Scope gate is a genuine hard block: `askScopeGate` blocks on `stdin`, and the orchestrator does
-  not proceed past it without an explicit decision.
-- Bounded rounds (Intake Triage ≤2, Scope gate ≤2) are enforced in code (`orchestrator.ts`), not by
-  asking the model to self-limit.
+```text
+.github/agents/
+  intake-triage.agent.md
+  architect.agent.md
+src/
+  copilotAgent.ts
+  loadAgent.ts
+  orchestrator.ts
+  scopeGate.ts
+  scopeTool.ts
+  types.ts
+examples/
+```
+
+This code is **not being discarded**. It remains useful for validating deterministic controls, bounded loops, issue fixtures, and SDK behavior. It should not become the final user-facing workflow unless the design is explicitly changed.
+
+## Agent responsibilities
+
+| Role | Access | Responsibility | Must not do |
+|---|---|---|---|
+| Intake Triage | Issue context only | Definition of Ready + declared-scope check | Inspect repo; invent requirements |
+| Architect | Read/search | Root cause, ADD/MODIFY/DELETE plan, one-hop blast radius, risk | Write code; approve scope expansion |
+| Developer | Read/write approved scope + execute | Implement fix and regression tests | Silently broaden scope |
+| QA | Read + execute tests | Validate original acceptance criteria and final-diff scope | Write source/test code |
+| Reviewer | Read-only | Risk/quality flags for human Merge Gate | Fix code; rerun QA; auto-trigger retries |
+| Release-helper | CI/recovery access | Planned pre/post-merge triage behavior | Write product source |
 
 ## Human-in-the-loop model
 
-Two roles, one gate in this slice: the **reporter** files the issue, and the **PM** is the one required
-approver at the Scope gate. The full eleven-step design adds a second gate (Dev + PM at the Merge gate,
-§5g) once Steps 04–10 are built.
+There are two hard blocking gates:
 
-## Success measures
+1. **Scope Gate** — code implementation cannot begin until the human approves the technical/impact plan and scope.
+2. **Merge Gate** — merge requires sequential human review: developer technical approval first, then PM business/scope approval.
 
-- Intake Triage correctly distinguishes a ready issue (`examples/sample-issue-ready.json`, should pass
-  round 1) from a vague one (`examples/sample-issue-vague.json`, should trigger the clarification loop
-  and eventually escalate if never clarified).
-- The scope tool actually blocks an out-of-scope read — this is checked by `isWithinScope` in
-  [src/scopeTool.ts](src/scopeTool.ts) and can be unit-tested directly without any SDK/network access.
-- The Scope gate genuinely pauses for human input and honors all three PM actions (approve, revise,
-  send back) with the correct downstream behavior for each.
+Scope expansion can never be approved by agents alone. Architect may confirm a real plan gap, but an expanded scope must return to the human Scope Gate.
+
+## Bounded execution
+
+The design intentionally avoids open-ended agent loops:
+
+- Intake clarification: maximum **2 rounds**.
+- Scope negotiation: maximum **2 cumulative rounds**.
+- Developer -> QA -> Reviewer implementation loop: maximum **3 attempts**.
+
+When a bound is reached, the workflow escalates instead of continuing to spend tokens.
+
+## Deterministic controls and efficiency
+
+The design prefers normal compute over LLM reasoning whenever the task does not require judgment:
+
+- write-scope enforcement,
+- baseline comparison for failing tests,
+- one-time flaky-test reruns,
+- known infrastructure-failure signature matching,
+- cross-package reference sweep after the diff is finalized.
+
+A dedicated Impact Auditor agent was intentionally removed from the design because the remaining cross-package detection problem is primarily deterministic search, not open-ended agent reasoning.
+
+## Current implementation milestone
+
+The first App-native milestone is intentionally narrow:
+
+```text
+real issue
+-> Intake
+-> Architect
+-> human Scope Gate
+-> Developer
+-> QA
+-> Reviewer
+-> PR / native CI
+-> human Merge Gate
+```
+
+The following are later milestones and should not be presented as implemented until they are verified in the GitHub Copilot App:
+
+- deterministic `preToolUse` write-scope enforcement,
+- machine-readable approval state,
+- Gated Change Canvas,
+- baseline/flaky/infra failure classifiers,
+- deterministic cross-package sweep,
+- Release-helper and post-merge auto-revert flow,
+- per-stage token/cost instrumentation.
+
+## Testing the first App-native slice
+
+1. Use the `copilot-app-plugin-alignment` branch while this migration is being validated.
+2. In the GitHub Copilot App, add this repository as a custom plugin marketplace.
+3. Install `gated-change`.
+4. Open a real GitHub issue from the App and start a **Plan** session.
+5. Select `gated-change-controller` using the custom-agent picker or `/agent`.
+6. Ask it to run the Gated Change workflow for the issue.
+7. Confirm Intake runs without repository access.
+8. Confirm Architect plans without writing code.
+9. Confirm no Developer work starts before explicit plan/scope approval.
+10. After approval, confirm Developer -> QA -> Reviewer handoff order.
+11. Create a PR in the App, allow native CI to run, and stop at the human Merge Gate.
+
+Do not move to Canvas, scope-hook, or post-merge development until this vertical slice behaves predictably in the actual App.
+
+## Governance / development guidance
+
+- [`AGENTS.md`](AGENTS.md) contains durable instructions for Codex/automation working on this repository.
+- [`CODEX-HANDOFF.md`](CODEX-HANDOFF.md) describes the current implementation state and exact next milestones.
+- [`implementation-plan.md`](implementation-plan.md) remains authoritative for workflow behavior and design rationale.
