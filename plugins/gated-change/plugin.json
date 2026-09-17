@@ -1,0 +1,17 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "gated-change",
+  "description": "Governed issue-to-PR execution for the GitHub Copilot App with specialist agents, bounded loops, explicit scope approval, independent validation, and human merge review.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Vamsi Cherukuri"
+  },
+  "repository": "https://github.com/vamsicherukuri/gated-fix-pipeline",
+  "keywords": [
+    "github-copilot-app",
+    "governance",
+    "human-in-the-loop",
+    "multi-agent",
+    "software-delivery"
+  ]
+}
