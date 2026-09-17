@@ -3,7 +3,6 @@ name: gated-change-developer
 description: Implements only a human-approved Gated Change plan and writes the corresponding regression tests.
 target: github-copilot
 tools: ["read", "search", "edit", "bash"]
-disable-model-invocation: true
 user-invocable: false
 metadata:
   stage: "05"

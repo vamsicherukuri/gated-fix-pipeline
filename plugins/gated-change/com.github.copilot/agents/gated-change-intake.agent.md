@@ -3,7 +3,6 @@ name: gated-change-intake
 description: Low-cost Definition-of-Ready triage for a GitHub issue. Uses issue context only and never inspects the repository.
 target: github-copilot
 tools: []
-disable-model-invocation: true
 user-invocable: false
 metadata:
   stage: "01.5"

@@ -3,7 +3,6 @@ name: gated-change-reviewer
 description: Performs independent read-only risk and quality review after QA. Flags issues for the human Merge Gate but never fixes code or consumes retry budget itself.
 target: github-copilot
 tools: ["read", "search"]
-disable-model-invocation: true
 user-invocable: false
 metadata:
   stage: "07"

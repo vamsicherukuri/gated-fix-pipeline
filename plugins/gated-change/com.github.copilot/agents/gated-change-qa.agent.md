@@ -3,7 +3,6 @@ name: gated-change-qa
 description: Independently validates an implementation against the original acceptance criteria and approved scope. Executes tests but never writes source code.
 target: github-copilot
 tools: ["read", "search", "bash"]
-disable-model-invocation: true
 user-invocable: false
 metadata:
   stage: "06"

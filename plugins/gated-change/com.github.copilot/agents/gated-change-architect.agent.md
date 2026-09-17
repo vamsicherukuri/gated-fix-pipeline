@@ -3,7 +3,6 @@ name: gated-change-architect
 description: Produces a technical and impact specification from a ready, scoped issue. Read/search only; never writes code.
 target: github-copilot
 tools: ["read", "search"]
-disable-model-invocation: true
 user-invocable: false
 metadata:
   stage: "02"

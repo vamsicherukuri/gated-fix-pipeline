@@ -165,7 +165,7 @@ The following are later milestones and should not be presented as implemented un
 2. In the GitHub Copilot App, add this repository as a custom plugin marketplace.
 3. Install `gated-change`.
 4. Open a real GitHub issue from the App and start a **Plan** session.
-5. Select `gated-change-controller` using the custom-agent picker or `/agent`.
+5. Select the Gated Change controller using the custom-agent picker. In Copilot CLI, its qualified identifier is `gated-change:gated-change-controller`.
 6. Ask it to run the Gated Change workflow for the issue.
 7. Confirm Intake runs without repository access.
 8. Confirm Architect plans without writing code.

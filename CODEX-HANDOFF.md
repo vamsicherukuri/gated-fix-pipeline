@@ -59,7 +59,7 @@ Prove the following end-to-end **inside the GitHub Copilot App**:
 
 1. Add this repository as a custom plugin marketplace and install `gated-change`.
 2. Start from a real GitHub issue.
-3. Select `gated-change-controller` in a Plan-mode session.
+3. Select the Gated Change controller in a Plan-mode session. In Copilot CLI, use the qualified identifier `gated-change:gated-change-controller`.
 4. Intake evaluates Definition of Ready without repo access.
 5. Architect produces the technical + one-hop blast-radius plan.
 6. Human explicitly approves scope before any source edit occurs.
@@ -111,6 +111,6 @@ Only human actions may change the approval decision or broaden approved scope.
 
 ## Exact next action for Codex
 
-Inspect the plugin artifacts against current GitHub Copilot App custom-agent/plugin documentation and the repository's `implementation-plan.md`.
+Run the first milestone from a real GitHub issue in the GitHub Copilot App. Confirm the Intake clarification bound, Intake-to-Architect structured handoff, and visible Scope Gate before allowing a real Developer implementation.
 
-Make only the minimal corrections required to get the first milestone installable and runnable in the GitHub Copilot App. Do not redesign the workflow and do not begin Canvas/post-merge work in the same change.
+Do not redesign the workflow and do not begin Canvas/post-merge work in the same change.

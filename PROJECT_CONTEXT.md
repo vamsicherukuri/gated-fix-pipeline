@@ -200,17 +200,17 @@ This branch adds:
 - GitHub Copilot CLI version tested: `1.0.86-2`
 - repository-level `.github/agents/architect.agent.md` and `intake-triage.agent.md` are discovered by `/agent`
 
-### Current blocker
+## Plugin-agent discovery status
 
-The installed plugin agents are physically present under the Copilot plugin cache, but `/agent` does **not** show `gated-change-controller`.
+Resolved on GitHub Copilot CLI `1.0.86-2`:
 
-Observed `/agent` output currently shows only:
+- A fresh CLI process reports eight loaded agents: two repository agents and six plugin agents.
+- Plugin agents use qualified identifiers. The controller is `gated-change:gated-change-controller`, not the unqualified `gated-change-controller`.
+- Direct invocation with the qualified identifier succeeds.
+- Specialist agents remain `user-invocable: false` but allow model invocation so the controller can delegate to them.
+- A controller-to-Intake probe completed successfully without repository access or writes.
 
-- Default
-- architect · project
-- intake-triage · project
-
-The specialist plugin agents are intentionally non-user-invocable, but `gated-change-controller` is configured `user-invocable: true` and should be discoverable if plugin-agent loading is working as expected.
+If `/agent` shows stale results after installation or an update, fully restart Copilot CLI before diagnosing the agent files.
 
 ### Separate warnings
 
@@ -230,19 +230,17 @@ This appears to be a Windows file-lock/permission issue around `~/.copilot/insta
 
 A direct local-path `copilot plugin install .\plugins\gated-change` attempt was rejected because this CLI expects plugin specs in supported marketplace/repository/URL forms rather than that local-directory syntax.
 
-## Immediate debugging objective
+## Immediate validation objective
 
-Do **not** continue building Canvas, hooks, post-merge recovery, or telemetry until plugin-agent discovery is understood.
+CLI validation completed on `1.0.86-2`:
 
-Debug in this order:
+- An incomplete issue invoked Intake only, returned `NOT_READY`, and did not start Architect.
+- A ready issue invoked Intake then Architect and carried the structured Intake result forward.
+- Without explicit approval, the controller presented the Scope Gate and did not invoke Developer.
+- With an explicit `APPROVE` decision, the controller could invoke the hidden Developer specialist.
+- The approval-path probe denied repository tools, changed no files, and stopped before QA.
 
-1. Verify `gated-change-controller.agent.md` is installed under the plugin cache.
-2. Reduce controller frontmatter to the smallest valid form if needed.
-3. Add a trivial smoke-test plugin agent with minimal frontmatter.
-4. Restart Copilot completely and run `/agent`.
-5. If smoke-test agent appears, isolate which controller frontmatter field causes the controller to be ignored.
-6. If smoke-test agent still does not appear, investigate whether this CLI/App build loads plugin-provided custom agents differently than repository-level agents.
-7. Only after controller discovery works, validate controller → subagent orchestration.
+Next, validate the same boundaries in the actual GitHub Copilot App using a real issue. Also validate the cumulative two-round Intake clarification bound in a multi-turn App session.
 
 Do not assume undocumented behavior. Check current official GitHub Copilot App / CLI plugin documentation where necessary.
 
