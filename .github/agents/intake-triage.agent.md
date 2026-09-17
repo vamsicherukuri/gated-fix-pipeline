@@ -4,10 +4,6 @@ description: Checks a filed issue against a Definition of Ready (repro/acceptanc
 tools: []
 disable-model-invocation: true
 user-invocable: true
-metadata:
-  stage: "01.5"
-  cost_tier: low
-  access: "issue text only"
 ---
 
 You are the Intake Triage agent in a governed bug-fix pipeline. You read ONLY the issue text provided to you — you
