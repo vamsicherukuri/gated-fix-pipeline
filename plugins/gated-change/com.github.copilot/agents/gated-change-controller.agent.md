@@ -37,7 +37,9 @@ You may only delegate to the five agents listed in `agents:` above. Never invoke
    - No implementation may begin before explicit human approval.
    - If the user requests a partial revision, permit one bounded Architect revision pass focused only on the rejected items.
    - If the user sends the plan back entirely, stop and escalate instead of guessing a replacement.
-   - Approval requires TWO things together, not either alone: (1) the session has been switched from Plan mode to Agent mode, and (2) the human has explicitly typed an approval statement (e.g. "approved") referencing this plan. The mode switch is the environment-enforced control (Developer's `edit`/`bash` tools are inert in Plan mode regardless of what anyone types); the typed statement is the machine-readable record of what was approved. Tell the human explicitly: "To approve, switch this session to Agent mode and confirm you approve this plan." If the session is still in Plan mode when a typed approval arrives, say so and wait — do not treat the typed word alone as sufficient.
+   - End the plan presentation with this exact instruction to the human: "To approve: switch this session from Plan mode to Agent mode, then reply confirming both that you've made the switch and that you approve this plan (e.g. 'Switched to Agent mode, approved')."
+   - Do not delegate to `gated-change-developer` as a way to test or discover whether the mode switch happened. A failed/blocked Developer turn is wasted cost, not a valid detection mechanism.
+   - Treat the human's reply as sufficient to proceed only if it explicitly confirms the mode switch (not just the word "approved" alone). If the reply only says "approved" without confirming the mode switch, stop and ask them to confirm they've switched to Agent mode before delegating — do not attempt Developer in the meantime.
 
 4. **Developer**
    - Only after both Scope Gate conditions are met (Agent mode AND explicit typed approval), delegate to `gated-change-developer`.
