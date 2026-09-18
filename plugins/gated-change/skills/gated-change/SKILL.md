@@ -9,17 +9,18 @@ Use this skill when a user wants to take a real GitHub issue through the governe
 
 ## Workflow contract
 
-1. Start from real GitHub issue context. The controller determines the issue's real content using whatever context or tools it genuinely has in the session (which may already include issue context the App attaches when a session starts from an issue) — no single fetch mechanism is prescribed. The one absolute rule is anti-fabrication: never guess, reconstruct, or invent plausible-sounding issue content; if the controller isn't confident the content is real, it says so and asks the human to confirm or directly provide the title/body/comments rather than inventing anything. Never reconstruct issue content from model memory or a chat attachment preview. If the issue has no substantive content (blank/whitespace-only body, no comments — GitHub disallows a blank title, so a bare title alone never counts as substantive content), the controller stops and asks the human to add content to the issue itself — it does not invoke Intake for a content-empty issue.
-2. Run Intake Triage against the Definition of Ready — only for issues that have real content to evaluate; Intake's job is judging sufficiency, not detecting total absence.
-3. If ready, run Architect to produce the technical + impact specification.
-4. Stop at the human Scope Gate. No code changes before explicit approval. Approval is a two-part act: the human switches the session from Plan mode to Agent mode (the environment-enforced control — Developer's write tools stay inert in Plan mode no matter what is typed) AND explicitly confirms both the mode switch and approval in their reply. Do not delegate to Developer speculatively to test whether the mode switch happened — that wastes a full Developer turn on a foregone conclusion; wait for the human's confirming reply instead.
-5. After approval, implement in the Copilot App session's isolated workspace/worktree through the Developer agent.
-6. Developer writes the fix and regression tests.
-7. QA independently validates the original acceptance criteria and final-diff scope compliance.
-8. Reviewer performs independent read-only risk/quality review.
-9. Open a pull request and let the repository's native CI run.
-10. Stop at the human Merge Gate: human developer technical approval first, then PM business/scope approval.
-11. Post-merge Release-helper behavior is added only when that planned stage is implemented and tested.
+1. The Controller receives the user's issue reference and delegates it to Intake. The Controller orchestrates only; it does not fetch or evaluate issue content.
+2. Intake uses its read-only GitHub issue tools to fetch the title, body, metadata, and comments, then returns `FETCH_FAILED`, `EMPTY`, `NOT_READY`, or `READY`. It never reconstructs issue content from memory or inference.
+3. For `EMPTY` or `NOT_READY`, the Controller asks the user to update the issue and reply `done`, then invokes Intake once more with the same reference. After two unsuccessful checks, stop and escalate.
+4. For `READY`, the Controller passes Intake's complete structured result, including the verified issue payload, to Architect for the technical + impact specification.
+5. Stop at the human Scope Gate. No code changes before explicit approval. Approval is a two-part act: the human switches the session from Plan mode to Agent mode (the environment-enforced control — Developer's write tools stay inert in Plan mode no matter what is typed) AND explicitly confirms both the mode switch and approval in their reply. Do not delegate to Developer speculatively to test whether the mode switch happened — that wastes a full Developer turn on a foregone conclusion; wait for the human's confirming reply instead.
+6. After approval, implement in the Copilot App session's isolated workspace/worktree through the Developer agent.
+7. Developer writes the fix and regression tests.
+8. QA independently validates the original acceptance criteria and final-diff scope compliance.
+9. Reviewer performs independent read-only risk/quality review.
+10. Open a pull request and let the repository's native CI run.
+11. Stop at the human Merge Gate: human developer technical approval first, then PM business/scope approval.
+12. Post-merge Release-helper behavior is added only when that planned stage is implemented and tested.
 
 ## Human-control rules
 
@@ -42,8 +43,8 @@ Use this skill when a user wants to take a real GitHub issue through the governe
 
 - Carry structured outputs forward instead of asking later agents to re-discover prior-stage context.
 - Prefer deterministic compute over LLM reasoning for baseline failure comparison, flaky reruns, infrastructure signature detection, and monorepo reference sweeps.
-- Fetching the source issue is deterministic compute in spirit even without a prescribed mechanism: always use real, verbatim issue content, never a remembered or paraphrased version, even on retries. A fabricated issue body is a critical integrity failure, not an acceptable degradation, no matter how plausible it looks or how faithfully it's quoted afterward.
-- Checking whether the issue is content-empty is also deterministic compute, done by the controller before spending an Intake invocation: blank body + no comments (regardless of title, since GitHub requires a non-blank title but a bare title never satisfies the Definition of Ready) costs zero agent turns, not one. Missing/incomplete (but non-empty) fields are still Intake's job to flag, bounded by the 2-round clarification cap; the fix in either case is updating the GitHub issue itself as the source of truth, never inventing values in-session.
+- Intake is the single issue-retrieval boundary. It uses real tool results on every invocation and returns `FETCH_FAILED` instead of remembered, paraphrased, or inferred content.
+- Intake classifies blank body + no comments as `EMPTY`; incomplete non-empty content is `NOT_READY`. The fix in either case is updating the GitHub issue itself, never inventing values in-session.
 - Do not add an Impact Auditor agent; the design intentionally removed it.
 - Do not spend extra reasoning on incidental observations merely to make them loggable.
 

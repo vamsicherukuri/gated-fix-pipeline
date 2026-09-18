@@ -54,6 +54,11 @@ the pipeline pauses — this is the primary defense against open-ended token bur
 title alone.
 
 **Decision:** insert a cheap, low-token completeness check before the Architect ever runs.
+- The Controller remains orchestration-only: it passes the issue owner/repository/number to Intake, routes Intake's
+  structured result, tracks clarification rounds, and invokes the next stage.
+- Intake owns read-only retrieval of the issue title, body, metadata, and comments through GitHub issue tools. It
+  returns one of four statuses: `FETCH_FAILED`, `EMPTY`, `NOT_READY`, or `READY`. A failed or untrustworthy fetch
+  must return `FETCH_FAILED`; Intake never reconstructs issue content from memory or inference.
 - Checks the issue against a **Definition of Ready**: repro path or expected-vs-actual behavior, something usable
   as acceptance criteria, and (added in §6) a declared scope (package/service path prefix).
 - **Sufficient →** proceeds to Step 2 (Architect) normally.
@@ -418,11 +423,12 @@ different bug, dead code, tech debt).
 ## 7. Agent permission boundaries
 
 Every stage's input must be the prior stage's **structured output**, never the raw issue re-read from scratch —
-this is the rule that prevents two agents from redoing each other's work and burning tokens twice.
+this is the rule that prevents two agents from redoing each other's work and burning tokens twice. Intake is the
+single issue-retrieval boundary; Architect receives Intake's verified issue payload through the Controller.
 
 | Agent | Access | Owns | Must not do |
 |---|---|---|---|
-| Intake Triage | Read-only, issue text only | Completeness + scope check | Touch the repo at all |
+| Intake Triage | Read-only GitHub issue tools; no source access | Issue retrieval + completeness/scope check | Read repository source or invent issue content |
 | Architect | Read/search the repo | Plan + blast-radius analysis | Write or commit code |
 | Developer | Read + write, own branch only | Implementation | Re-explore the repo — consumes Architect's plan as-is |
 | QA | Read + execute tests | Functional correctness | Write source; judge risk or quality |
