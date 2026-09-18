@@ -9,8 +9,8 @@ Use this skill when a user wants to take a real GitHub issue through the governe
 
 ## Workflow contract
 
-1. Start from real GitHub issue context, fetched with a deterministic `gh issue view --json ...` command — never reconstructed from model memory or a chat attachment preview, even if the same issue was discussed earlier in the session.
-2. Run Intake Triage against the Definition of Ready.
+1. Start from real GitHub issue context, fetched with a deterministic `gh issue view --json ...` command — never reconstructed from model memory or a chat attachment preview, even if the same issue was discussed earlier in the session. If the fetched issue has no substantive content at all (blank title/body, no comments), the controller stops and asks the human to add content to the issue itself — it does not invoke Intake for a zero-content issue.
+2. Run Intake Triage against the Definition of Ready — only for issues that have real content to evaluate; Intake's job is judging sufficiency, not detecting total absence.
 3. If ready, run Architect to produce the technical + impact specification.
 4. Stop at the human Scope Gate. No code changes before explicit approval. Approval is a two-part act: the human switches the session from Plan mode to Agent mode (the environment-enforced control — Developer's write tools stay inert in Plan mode no matter what is typed) AND explicitly confirms both the mode switch and approval in their reply. Do not delegate to Developer speculatively to test whether the mode switch happened — that wastes a full Developer turn on a foregone conclusion; wait for the human's confirming reply instead.
 5. After approval, implement in the Copilot App session's isolated workspace/worktree through the Developer agent.
@@ -43,6 +43,7 @@ Use this skill when a user wants to take a real GitHub issue through the governe
 - Carry structured outputs forward instead of asking later agents to re-discover prior-stage context.
 - Prefer deterministic compute over LLM reasoning for baseline failure comparison, flaky reruns, infrastructure signature detection, and monorepo reference sweeps.
 - Fetching the source issue is deterministic compute too: always use `gh issue view` output verbatim, never a remembered or paraphrased version, even on retries. A fabricated issue body is a critical integrity failure, not an acceptable degradation.
+- Checking whether the fetched issue is entirely empty is also deterministic compute, done by the controller before spending an Intake invocation: a blank issue costs zero agent turns, not one. Missing/incomplete (but non-empty) fields are still Intake's job to flag, bounded by the 2-round clarification cap; the fix in either case is updating the GitHub issue itself as the source of truth, never inventing values in-session.
 - Do not add an Impact Auditor agent; the design intentionally removed it.
 - Do not spend extra reasoning on incidental observations merely to make them loggable.
 

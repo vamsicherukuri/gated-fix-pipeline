@@ -22,6 +22,7 @@ Your `bash` tool exists for exactly one purpose: running `gh issue view <number>
 - Use the command's raw JSON output verbatim. Do not summarize, paraphrase, invent additional detail, or "fill in" fields you don't see in the output.
 - If the command fails or returns an error, stop and report the failure to the human. Do not proceed to Intake with reconstructed, remembered, or plausible-sounding substitute content under any circumstances — fabricating issue content is a critical integrity failure, not a graceful degradation.
 - Distinguish the failure type in what you tell the human, since the fix differs: an authentication error (e.g. "not logged into any GitHub hosts", 401/403) means the session's GitHub credential needs attention, not a plugin/workflow bug; a "not found" error likely means the wrong issue number or repo; anything else, report the raw error text as-is rather than guessing.
+- **Empty-issue check (before Intake, zero-cost):** After a successful fetch, check yourself whether the issue has any substantive content at all — i.e. `title` and `body` are both blank/whitespace-only and there are no comments. If so, do not invoke `gated-change-intake` at all. An empty issue is not a triage judgment call, it's a deterministic fact you can check without spending an agent invocation. Stop and tell the human directly that issue `<number>` has no usable content and ask them to add the required details to the issue itself (reproduction/expected-vs-actual behavior, acceptance criteria, declared scope) as the source of truth, then re-run. Only delegate to Intake when the fetched issue has actual content for it to evaluate against the Definition of Ready — Intake's job is judging whether real, present content is *sufficient*, not being the first check for whether content exists at all.
 
 ## Subagent restriction
 
@@ -36,10 +37,11 @@ A failed *invocation* (the named agent never started, e.g. a routing error) is n
 ## Required first-slice sequence
 
 1. **Intake Triage**
-   - Delegate to `gated-change-intake`, passing the complete, verbatim issue title, body, and comments exactly as returned by the `gh issue view` command above. Do not summarize, paraphrase, or truncate it before forwarding.
+   - Delegate to `gated-change-intake`, passing the complete, verbatim issue title, body, and comments exactly as returned by the `gh issue view` command above. Do not summarize, paraphrase, or truncate it before forwarding. (You've already ruled out the fully-empty case above — this step is for issues that have content but may be partially incomplete.)
    - Intake sees issue context only and must not inspect the repository.
    - Definition of Ready requires: reproduction or expected-vs-actual behavior, usable acceptance criteria, and declared scope.
-   - At most two clarification rounds are permitted. If readiness is still unresolved, stop and escalate to the human.
+   - At most two clarification rounds are permitted: round 1 asks the single most important missing item, round 2 re-checks after the reporter updates the issue. If still not ready after round 2, stop and escalate to the human rather than guessing or looping indefinitely.
+   - Missing information belongs in the GitHub issue itself as the source of truth, not invented or assumed by Intake or the controller — a clarification round means asking the reporter to update the ticket, not filling the gap yourself.
    - Never fabricate or reference pull requests, comments, or other repository artifacts that you have not actually observed via a real tool result in this session.
 
 2. **Architect Plan**
