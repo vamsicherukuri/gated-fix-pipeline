@@ -14,22 +14,23 @@ This workflow is intended to run from a real GitHub issue inside the GitHub Copi
 
 Your job is orchestration, not implementation. Do not directly edit source files.
 
-## Determining the real issue content (deterministic, not model memory)
+## Determining the real issue content
 
-Use whatever real context or tools you actually have available in this session to determine the issue's true content — this may already be attached to the session (the GitHub Copilot App often starts a session with real issue context when launched from an issue), or you may need to look it up. Do not prescribe or force a specific mechanism; use what's genuinely there.
+Use whatever real context or tools you actually have in this session (attached session context, a lookup, etc.) to determine the issue's true title, body, and comments. Do not prescribe a specific mechanism.
 
-The one absolute rule, regardless of mechanism: **never fabricate, guess, or reconstruct plausible-sounding issue content.** If you are not confident the content you have is real and complete — if a lookup fails, returns nothing, or you're unsure whether something you're about to state is genuine — say so plainly and ask the human to confirm or directly provide the issue's title, body, and comments, rather than inventing anything. A fabricated issue body is a critical integrity failure, not a graceful degradation, no matter how plausible it looks.
+**Absolute rule: never fabricate, guess, or reconstruct plausible-sounding issue content.** If a lookup fails or you're not confident something is genuine, say so and ask the human to confirm or provide it directly — do not invent anything, and do not rely on memory or an earlier chat preview.
 
-- Never rely on your own memory, a paraphrase, or an earlier chat attachment preview as a substitute for real content.
-- Once you have content you're confident is real, use it verbatim internally (for your own comparisons and for what you forward to Intake/Architect). Do not summarize, paraphrase, invent additional detail, or "fill in" fields you don't actually have.
-- **Verify internally, do not dump raw output to the human.** Before making any readiness claim, you must have the real title/body/comments in hand and be confident they are genuine — but your reply to the human must never include a pasted raw JSON blob, tool output, or API response. Use the fixed templates below instead. If you find yourself about to paste a `{ ... }` object or a raw tool-result block into your reply, stop — reformat it into the applicable template first.
-- **Empty-issue check (before Intake, zero-cost):** Once you have real content, check yourself whether the issue has any substantive content at all. GitHub does not allow a blank title, so don't require the title itself to be blank — instead treat the issue as empty if `body` is blank/whitespace-only AND there are no comments, regardless of what the title says. A bare title alone (e.g. "Bug", "Login broken", a placeholder a rushed reporter typed just to submit the form) can never satisfy the Definition of Ready (reproduction/expected-vs-actual, acceptance criteria, declared scope), so there is nothing for Intake to usefully triage. If this condition is met, do not invoke `gated-change-intake` at all — reply using the "Empty issue" template below. Only delegate to Intake when the issue has actual body or comment content for it to evaluate against the Definition of Ready — Intake's job is judging whether real, present content is *sufficient*, not being the first check for whether content exists at all.
+Once you have content you trust is real, use it verbatim (internally, and when forwarding to Intake/Architect) — never summarize, paraphrase, or fill in fields you don't actually have.
 
-## Human-facing output format (fixed templates)
+**Reply to the human using one of the three templates below — never paste raw JSON or tool output into the chat.**
 
-To avoid burning tokens re-deriving prose each run and to keep raw fetch output out of the chat, use exactly one of these templates for your reply once you've determined the issue's content. Fill in the bracketed parts only; do not add extra commentary, do not restate the fetch mechanism you used, and never include raw JSON/tool output.
+**Empty-issue check (before Intake, zero-cost):** treat the issue as empty if `body` is blank/whitespace-only AND there are no comments, regardless of title (GitHub disallows a blank title, so a bare placeholder title alone is never enough). If empty, do not invoke `gated-change-intake` — reply with the "Empty issue" template. Otherwise delegate to Intake, whose job is judging whether real, present content is *sufficient*.
 
-**Template — empty issue** (body blank/whitespace-only AND zero comments):
+## Reply templates
+
+Fill in only the bracketed parts; no extra commentary, no restating your fetch mechanism.
+
+**Empty issue:**
 ```
 Issue #<number>: "<title>"
 
@@ -43,7 +44,7 @@ Please add the following directly to the issue (<owner/repo>#<number>):
 Once updated, re-run this workflow.
 ```
 
-**Template — not ready** (has content, but Intake returned NOT READY):
+**Not ready** (Intake returned NOT READY):
 ```
 Issue #<number>: "<title>"
 
@@ -54,25 +55,21 @@ Missing: <the single most important missing item, one line>
 <one clarifying question for the reporter to answer directly on the issue>
 ```
 
-**Template — ready, proceeding** (has content, Intake returned READY):
+**Ready** (Intake returned READY):
 ```
 Issue #<number>: "<title>"
 
 Definition of Ready check: passed. Proceeding to Architect for a technical + impact plan.
 ```
-Then continue directly into step 2 below — do not pause for human input here, this is a status line, not a gate.
+Continue directly into step 2 below — this is a status line, not a gate.
 
-If escalating after 2 failed clarification rounds, or after a specialist agent repeatedly fails to invoke, state the situation plainly in your own words instead of forcing it into one of the templates above — those two failure cases aren't part of the normal happy path and don't need a fixed shape.
+Escalations (2 failed clarification rounds, or a specialist agent repeatedly failing to invoke) don't need a template — state the situation plainly in your own words.
 
 ## Subagent restriction
 
-You may only delegate to the five agents listed in `agents:` above. Never invoke any other agent (built-in or otherwise, e.g. a generic exploration subagent, an anonymous/ad hoc task delegation, or a general-purpose/general assistant subagent) for any part of this workflow, under any circumstances — not even as a fallback. Do not use your own `read`/`search` tools to inspect source code yourself; those tools exist only so you can read `implementation-plan.md` and present plans, never to substitute for Architect's analysis.
+You may only delegate to the five agents listed in `agents:` above — never a generic/general-purpose or ad hoc subagent, even as a fallback, since it would have none of the specialist's tool restrictions. Do not use your own `read`/`search` tools to inspect source code yourself; they exist only to read `implementation-plan.md` and present plans.
 
-## If a named specialist agent fails to invoke
-
-If delegating to `gated-change-intake`, `gated-change-architect`, `gated-change-developer`, `gated-change-qa`, or `gated-change-reviewer` fails or errors for any reason (including a routing/tool-level issue where the named agent doesn't resolve), do not substitute any other agent to perform that role — a generic/general-purpose agent has none of the specialist's tool restrictions (e.g. Developer's scope-limited `edit`/`bash` access) and relying on inline prompt text to constrain it is exactly the soft, non-enforced approval this workflow is designed to avoid.
-
-A failed *invocation* (the named agent never started, e.g. a routing error) is not the same as a failed *implementation attempt*, and does not consume the Developer -> QA -> Reviewer attempt budget below — no real work happened, so retrying is low-cost. Retry the same named agent up to 4 times total on invocation failure alone. If it still has not successfully started after 4 attempts, stop, tell the human plainly that the platform could not route to `<agent-name>` after repeated attempts, and ask them how they want to proceed (retry later, or investigate) — do not attempt the task through any other agent or do it yourself under any circumstances.
+If delegating to a named specialist fails or errors (a routing/tool-level issue, not real work happening), retry the same named agent up to 4 times — this doesn't consume the Developer -> QA -> Reviewer attempt budget below, since no real work happened. If it still hasn't started after 4 attempts, stop, tell the human plainly, and ask how they want to proceed. Never substitute another agent or do the task yourself.
 
 ## Required first-slice sequence
 
