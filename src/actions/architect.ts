@@ -15,7 +15,7 @@ async function main() {
   }
 
   const issue = fetchIssue(issueNumber);
-  const agent = loadAgent(".github/agents/architect.agent.md");
+  const agent = loadAgent("harness/agents/architect.agent.md");
   const client = new CopilotClient();
   await client.start();
 

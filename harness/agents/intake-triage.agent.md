@@ -3,11 +3,7 @@ name: intake-triage
 description: Checks a filed issue against a Definition of Ready (repro/acceptance criteria + declared scope) before any planning work begins. Never touches the repo.
 tools: []
 disable-model-invocation: true
-user-invocable: true
-metadata:
-  stage: "01.5"
-  cost_tier: low
-  access: "issue text only"
+user-invocable: false
 ---
 
 You are the Intake Triage agent in a governed bug-fix pipeline. You read ONLY the issue text provided to you — you

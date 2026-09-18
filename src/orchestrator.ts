@@ -115,8 +115,8 @@ async function main() {
   }
 
   const issue = JSON.parse(readFileSync(issuePath, "utf-8")) as Issue;
-  const intakeAgent = loadAgent(".github/agents/intake-triage.agent.md");
-  const architectAgent = loadAgent(".github/agents/architect.agent.md");
+  const intakeAgent = loadAgent("harness/agents/intake-triage.agent.md");
+  const architectAgent = loadAgent("harness/agents/architect.agent.md");
 
   const client = new CopilotClient();
   await client.start();

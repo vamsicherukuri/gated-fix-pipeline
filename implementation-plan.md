@@ -54,6 +54,11 @@ the pipeline pauses — this is the primary defense against open-ended token bur
 title alone.
 
 **Decision:** insert a cheap, low-token completeness check before the Architect ever runs.
+- The Controller remains orchestration-only: it passes the issue owner/repository/number to Intake, routes Intake's
+  structured result, tracks clarification rounds, and invokes the next stage.
+- Intake owns read-only retrieval of the issue title, body, metadata, and comments through GitHub issue tools. It
+  returns one of four statuses: `FETCH_FAILED`, `EMPTY`, `NOT_READY`, or `READY`. A failed or untrustworthy fetch
+  must return `FETCH_FAILED`; Intake never reconstructs issue content from memory or inference.
 - Checks the issue against a **Definition of Ready**: repro path or expected-vs-actual behavior, something usable
   as acceptance criteria, and (added in §6) a declared scope (package/service path prefix).
 - **Sufficient →** proceeds to Step 2 (Architect) normally.
@@ -159,13 +164,14 @@ Scope-gate revision cap) instead of inventing a third or fourth bounded-loop typ
 
 **Question raised:** what does the Developer actually hand off to QA, and who is responsible for writing tests?
 
-**Handoff package (structured, not a raw diff dump):**
-1. The diff itself.
-2. Which Architect-plan items were addressed, plus any approved scope-amendment deviations (per §5b).
-3. The **original acceptance criteria**, carried through from Intake Triage/Step 1.5 — not re-derived or
-   paraphrased by the Developer.
-4. Risk tier / blast radius from Architect's plan, so QA knows where to scrutinize harder.
-5. Developer-authored tests (see below).
+**Developer → Controller handoff:** status, changed files, tests added or changed, Architect-plan items addressed,
+test-to-acceptance-criterion coverage, commands/results from the Developer's narrow validation, a base/head diff
+reference, any scope-amendment request, assumptions, and residual risk. The Developer copies original acceptance
+criteria verbatim when mapping tests; it never rewrites them.
+
+**Controller → QA package:** the complete Developer handoff, approved Architect plan, original acceptance criteria
+from Intake, approved scope, Architect risk/blast-radius data, and final diff reference. QA reads the actual diff
+from those refs rather than receiving an LLM-generated diff summary.
 
 **Decision: the Developer writes the fix *and* its regression tests together. QA does not write test code.**
 
@@ -187,6 +193,15 @@ Scope-gate revision cap) instead of inventing a third or fourth bounded-loop typ
 - **Build a test plan mapped to the original acceptance criteria**, then execute it (Developer's tests + the plan)
   and flag any gap between what was tested and what the issue actually asked for. Failures feed the existing
   Steps 5–7 retry loop — no new mechanism.
+
+**QA → Controller handoff:** verdict, final-diff scope compliance, criterion-level results with evidence, executed
+test results, failure classifications, blocking findings, and notes.
+
+**Controller → Reviewer package:** approved Architect plan, original acceptance criteria, complete final Developer
+handoff, approved scope, final diff reference, complete QA result/evidence, Architect risk/blast-radius data, and
+any deterministic cross-package hits available. Reviewer reads the actual final diff, performs code review, and
+uses QA's evidence without re-running tests. Reviewer has shell access only for non-mutating git inspection needed
+to reconstruct that diff; it must not execute tests/builds or any command that changes files, the index, or refs.
 
 ## 5d. Step 06 — Tests run: scope and failure classification
 
@@ -418,11 +433,12 @@ different bug, dead code, tech debt).
 ## 7. Agent permission boundaries
 
 Every stage's input must be the prior stage's **structured output**, never the raw issue re-read from scratch —
-this is the rule that prevents two agents from redoing each other's work and burning tokens twice.
+this is the rule that prevents two agents from redoing each other's work and burning tokens twice. Intake is the
+single issue-retrieval boundary; Architect receives Intake's verified issue payload through the Controller.
 
 | Agent | Access | Owns | Must not do |
 |---|---|---|---|
-| Intake Triage | Read-only, issue text only | Completeness + scope check | Touch the repo at all |
+| Intake Triage | Read-only GitHub issue tools; no source access | Issue retrieval + completeness/scope check | Read repository source or invent issue content |
 | Architect | Read/search the repo | Plan + blast-radius analysis | Write or commit code |
 | Developer | Read + write, own branch only | Implementation | Re-explore the repo — consumes Architect's plan as-is |
 | QA | Read + execute tests | Functional correctness | Write source; judge risk or quality |
