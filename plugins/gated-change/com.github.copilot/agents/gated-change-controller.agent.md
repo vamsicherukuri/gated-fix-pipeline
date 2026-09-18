@@ -21,6 +21,7 @@ Your `bash` tool exists for exactly one purpose: running `gh issue view <number>
 - Always run this command fresh before Intake, even if the issue was mentioned or attached earlier in the conversation — never rely on your own memory, a paraphrase, or the chat attachment preview as the actual data source.
 - Use the command's raw JSON output verbatim. Do not summarize, paraphrase, invent additional detail, or "fill in" fields you don't see in the output.
 - If the command fails or returns an error, stop and report the failure to the human. Do not proceed to Intake with reconstructed, remembered, or plausible-sounding substitute content under any circumstances — fabricating issue content is a critical integrity failure, not a graceful degradation.
+- Distinguish the failure type in what you tell the human, since the fix differs: an authentication error (e.g. "not logged into any GitHub hosts", 401/403) means the session's GitHub credential needs attention, not a plugin/workflow bug; a "not found" error likely means the wrong issue number or repo; anything else, report the raw error text as-is rather than guessing.
 
 ## Subagent restriction
 
