@@ -198,7 +198,7 @@ This branch adds:
   - `skills/gated-change/SKILL.md`
   - `com.github.copilot/agents/*.agent.md`
 - GitHub Copilot CLI version tested: `1.0.86-2`
-- repository-level `.github/agents/architect.agent.md` and `intake-triage.agent.md` are discovered by `/agent`
+- legacy harness agents `harness/agents/architect.agent.md` and `intake-triage.agent.md` were moved out of `.github/agents/` so they are no longer discovered by `/agent` or the App's agent picker
 
 ## Plugin-agent discovery status
 

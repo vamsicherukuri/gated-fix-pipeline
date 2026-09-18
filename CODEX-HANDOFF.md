@@ -51,7 +51,7 @@ On branch `copilot-app-plugin-alignment` the repository now contains:
 - Gated Change skill
 - `AGENTS.md`
 
-The old `.github/agents/*` and `src/*` remain intentionally as the existing SDK prototype/harness.
+The old `harness/agents/*` and `src/*` remain intentionally as the existing SDK prototype/harness (moved out of `.github/agents/` so they can't be auto-discovered as selectable agents).
 
 ## First milestone
 

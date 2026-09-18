@@ -2,7 +2,7 @@
 
 This repository implements the workflow designed in [`implementation-plan.md`](implementation-plan.md) as a **GitHub Copilot App-native, governed issue-to-PR pattern**.
 
-The project began as a narrow SDK proof of concept called **Gated Fix Pipeline**. That prototype is intentionally retained under `.github/agents/` and `src/` because it contains useful working examples of bounded control flow and deterministic scope checks. The **customer-facing challenge implementation now lives under `plugins/gated-change/`** and is intended to run inside the GitHub Copilot App.
+The project began as a narrow SDK proof of concept called **Gated Fix Pipeline**. That prototype is intentionally retained under `harness/agents/` and `src/` because it contains useful working examples of bounded control flow and deterministic scope checks. Deliberately kept out of `.github/agents/` so it is never auto-discovered as a selectable agent in VS Code or the GitHub Copilot App. The **customer-facing challenge implementation now lives under `plugins/gated-change/`** and is intended to run inside the GitHub Copilot App.
 
 ## Source of truth
 
@@ -76,7 +76,7 @@ The plugin is the reusable field/customer pattern. It packages the workflow guid
 ### Existing SDK prototype / test harness
 
 ```text
-.github/agents/
+harness/agents/
   intake-triage.agent.md
   architect.agent.md
 src/
