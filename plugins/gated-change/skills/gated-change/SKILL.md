@@ -35,6 +35,7 @@ Use this skill when a user wants to take a real GitHub issue through the governe
 - Intake clarification: <= 2 rounds.
 - Scope negotiation: <= 2 cumulative rounds.
 - Developer -> QA -> Reviewer implementation attempts: <= 3.
+- A Developer invocation that never started (routing/tool-level failure, no side effects) does not consume an implementation attempt \u2014 retry it directly. A Developer stall mid-task (real edits may already exist) does consume one attempt, and must resume by first checking the actual git state rather than assuming a clean worktree.
 - Escalate rather than loop beyond a bound.
 
 ## Efficiency rules

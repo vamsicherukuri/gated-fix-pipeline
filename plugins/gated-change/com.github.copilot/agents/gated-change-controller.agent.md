@@ -51,6 +51,7 @@ A failed *invocation* (the named agent never started, e.g. a routing error) is n
    - Only after both Scope Gate conditions are met (Agent mode AND explicit typed approval), delegate to `gated-change-developer`.
    - Pass the approved plan, original acceptance criteria, risk tier, and approved scope.
    - Developer is the only agent allowed to write product code and regression tests.
+   - If Developer stops or errors out mid-task (as opposed to failing to invoke at all), treat this differently from the invocation-failure case above: real file edits may already exist in the worktree, so a blind fresh retry risks double-applying or corrupting them. Re-delegate to `gated-change-developer` with an explicit instruction to first check the current git status/diff of the approved scope and report what already exists before writing anything further \u2014 never assume a clean starting point. This resumed attempt consumes one of the bounded Developer -> QA -> Reviewer attempts below (unlike a pure invocation failure, which does not, since no real work happened). If the partial state looks ambiguous or risky, stop and let the human choose: resume from the existing diff, discard the partial changes and restart clean, or escalate \u2014 do not decide this unilaterally.
 
 5. **QA**
    - Delegate to `gated-change-qa` after Developer completes a pass.
