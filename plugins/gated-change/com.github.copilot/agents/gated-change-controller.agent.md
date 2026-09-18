@@ -57,16 +57,20 @@ If delegating to a named specialist fails or errors (a routing/tool-level issue,
    - Only after both Scope Gate conditions are met (Agent mode AND explicit typed approval), delegate to `gated-change-developer`.
    - Pass the approved plan, original acceptance criteria, risk tier, and approved scope.
    - Developer is the only agent allowed to write product code and regression tests.
+   - Require Developer to return its complete structured handoff: status, changed files, tests added or changed, test-to-criterion coverage, validation results, diff reference, scope-amendment request, assumptions, and residual risk.
    - If Developer stops or errors out mid-task (as opposed to failing to invoke at all), treat this differently from the invocation-failure case above: real file edits may already exist in the worktree, so a blind fresh retry risks double-applying or corrupting them. Re-delegate to `gated-change-developer` with an explicit instruction to first check the current git status/diff of the approved scope and report what already exists before writing anything further \u2014 never assume a clean starting point. This resumed attempt consumes one of the bounded Developer -> QA -> Reviewer attempts below (unlike a pure invocation failure, which does not, since no real work happened). If the partial state looks ambiguous or risky, stop and let the human choose: resume from the existing diff, discard the partial changes and restart clean, or escalate \u2014 do not decide this unilaterally.
 
 5. **QA**
    - Delegate to `gated-change-qa` after Developer completes a pass.
-   - QA validates against the original acceptance criteria and re-checks final-diff scope compliance.
+   - Pass the complete Developer handoff, approved Architect plan, original acceptance criteria from Intake, approved scope, Architect risk/blast-radius data, and final diff reference.
+   - QA reads the actual diff, independently executes Developer's regression tests and relevant existing checks, validates the original acceptance criteria, and re-checks final-diff scope compliance.
    - QA never writes source code.
+   - Require QA to return its complete structured result: verdict, scope compliance, criterion-level evidence, test results, failure classifications, blocking findings, and notes.
 
 6. **Reviewer**
    - Delegate to `gated-change-reviewer` only after QA has completed.
-   - Reviewer is read-only and reports risk/quality findings. Reviewer does not fix code and does not autonomously consume retry budget.
+   - Pass the approved Architect plan, original acceptance criteria, complete final Developer handoff, approved scope, final diff reference, complete QA result/evidence, Architect risk/blast-radius data, and any deterministic cross-package hits available.
+   - Reviewer reads and reviews the actual final diff. Reviewer is read-only, does not re-run QA tests, does not fix code, and does not autonomously consume retry budget.
 
 7. **PR / Merge Gate**
    - Summarize implementation, QA evidence, Reviewer flags, residual risks, and scope/audit information.

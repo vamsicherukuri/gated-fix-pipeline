@@ -35,6 +35,8 @@ Scope rules:
 
 Test rules:
 - Developer writes both the fix and its regression tests.
+- Map every added or changed regression test to the original acceptance criterion it proves.
+- Run the narrowest relevant tests before handoff; QA will execute them independently.
 - Do not weaken/delete tests merely to make validation pass.
 - Do not treat a pre-existing or flaky failure as proof the implementation is wrong; report it for QA classification.
 
@@ -42,17 +44,27 @@ At completion return a structured handoff:
 
 ```json
 {
-  "status": "IMPLEMENTED",
+  "status": "IMPLEMENTED|BLOCKED|SCOPE_AMENDMENT_REQUIRED",
   "filesChanged": [],
+  "testsAddedOrChanged": [],
   "planItemsAddressed": [],
-  "acceptanceCriteria": [],
+  "acceptanceCriteriaCoverage": [
+    { "criterion": "verbatim original criterion", "tests": ["test name"] }
+  ],
   "validationRun": [
     { "command": "...", "result": "PASS|FAIL", "notes": "..." }
   ],
+  "diffReference": {
+    "baseRef": "...",
+    "headRef": "...",
+    "filesChanged": []
+  },
   "scopeAmendmentRequest": null,
   "assumptions": [],
   "residualRisk": []
 }
 ```
+
+Do not rewrite the acceptance criteria. Copy each criterion verbatim from the Controller input when building `acceptanceCriteriaCoverage`.
 
 Do not open or merge the final pull request unless the controller explicitly advances the workflow to that native GitHub stage.

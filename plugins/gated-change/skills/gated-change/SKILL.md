@@ -42,6 +42,8 @@ Use this skill when a user wants to take a real GitHub issue through the governe
 ## Efficiency rules
 
 - Carry structured outputs forward instead of asking later agents to re-discover prior-stage context.
+- Developer returns changed files, regression tests and criterion coverage, validation results, and a base/head diff reference. Controller combines that handoff with the approved plan, original criteria, scope, and risk context for QA.
+- QA independently executes validation and returns criterion evidence, scope compliance, test results, and failure classifications. Controller combines that result with the final Developer handoff and actual diff reference for Reviewer.
 - Prefer deterministic compute over LLM reasoning for baseline failure comparison, flaky reruns, infrastructure signature detection, and monorepo reference sweeps.
 - Intake is the single issue-retrieval boundary. It uses real tool results on every invocation and returns `FETCH_FAILED` instead of remembered, paraphrased, or inferred content.
 - Intake classifies blank body + no comments as `EMPTY`; incomplete non-empty content is `NOT_READY`. The fix in either case is updating the GitHub issue itself, never inventing values in-session.

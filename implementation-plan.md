@@ -164,13 +164,14 @@ Scope-gate revision cap) instead of inventing a third or fourth bounded-loop typ
 
 **Question raised:** what does the Developer actually hand off to QA, and who is responsible for writing tests?
 
-**Handoff package (structured, not a raw diff dump):**
-1. The diff itself.
-2. Which Architect-plan items were addressed, plus any approved scope-amendment deviations (per §5b).
-3. The **original acceptance criteria**, carried through from Intake Triage/Step 1.5 — not re-derived or
-   paraphrased by the Developer.
-4. Risk tier / blast radius from Architect's plan, so QA knows where to scrutinize harder.
-5. Developer-authored tests (see below).
+**Developer → Controller handoff:** status, changed files, tests added or changed, Architect-plan items addressed,
+test-to-acceptance-criterion coverage, commands/results from the Developer's narrow validation, a base/head diff
+reference, any scope-amendment request, assumptions, and residual risk. The Developer copies original acceptance
+criteria verbatim when mapping tests; it never rewrites them.
+
+**Controller → QA package:** the complete Developer handoff, approved Architect plan, original acceptance criteria
+from Intake, approved scope, Architect risk/blast-radius data, and final diff reference. QA reads the actual diff
+from those refs rather than receiving an LLM-generated diff summary.
 
 **Decision: the Developer writes the fix *and* its regression tests together. QA does not write test code.**
 
@@ -192,6 +193,14 @@ Scope-gate revision cap) instead of inventing a third or fourth bounded-loop typ
 - **Build a test plan mapped to the original acceptance criteria**, then execute it (Developer's tests + the plan)
   and flag any gap between what was tested and what the issue actually asked for. Failures feed the existing
   Steps 5–7 retry loop — no new mechanism.
+
+**QA → Controller handoff:** verdict, final-diff scope compliance, criterion-level results with evidence, executed
+test results, failure classifications, blocking findings, and notes.
+
+**Controller → Reviewer package:** approved Architect plan, original acceptance criteria, complete final Developer
+handoff, approved scope, final diff reference, complete QA result/evidence, Architect risk/blast-radius data, and
+any deterministic cross-package hits available. Reviewer reads the actual final diff, performs code review, and
+uses QA's evidence without re-running tests.
 
 ## 5d. Step 06 — Tests run: scope and failure classification
 
