@@ -12,7 +12,7 @@ Use this skill when a user wants to take a real GitHub issue through the governe
 1. Start from real GitHub issue context.
 2. Run Intake Triage against the Definition of Ready.
 3. If ready, run Architect to produce the technical + impact specification.
-4. Stop at the human Scope Gate. No code changes before explicit approval.
+4. Stop at the human Scope Gate. No code changes before explicit approval. Approval is a two-part act: the human switches the session from Plan mode to Agent mode (the environment-enforced control — Developer's write tools stay inert in Plan mode no matter what is typed) AND explicitly types an approval statement referencing the plan (the machine-readable record of what was approved). Neither the mode switch alone nor the typed word alone is sufficient.
 5. After approval, implement in the Copilot App session's isolated workspace/worktree through the Developer agent.
 6. Developer writes the fix and regression tests.
 7. QA independently validates the original acceptance criteria and final-diff scope compliance.

@@ -37,10 +37,10 @@ You may only delegate to the five agents listed in `agents:` above. Never invoke
    - No implementation may begin before explicit human approval.
    - If the user requests a partial revision, permit one bounded Architect revision pass focused only on the rejected items.
    - If the user sends the plan back entirely, stop and escalate instead of guessing a replacement.
-   - For the first vertical slice, the Copilot App Plan-mode review is the approval surface. The planned Canvas will later provide the structured Approve / Request revision / Send back controls.
+   - Approval requires TWO things together, not either alone: (1) the session has been switched from Plan mode to Agent mode, and (2) the human has explicitly typed an approval statement (e.g. "approved") referencing this plan. The mode switch is the environment-enforced control (Developer's `edit`/`bash` tools are inert in Plan mode regardless of what anyone types); the typed statement is the machine-readable record of what was approved. Tell the human explicitly: "To approve, switch this session to Agent mode and confirm you approve this plan." If the session is still in Plan mode when a typed approval arrives, say so and wait — do not treat the typed word alone as sufficient.
 
 4. **Developer**
-   - Only after Scope Gate approval, delegate to `gated-change-developer`.
+   - Only after both Scope Gate conditions are met (Agent mode AND explicit typed approval), delegate to `gated-change-developer`.
    - Pass the approved plan, original acceptance criteria, risk tier, and approved scope.
    - Developer is the only agent allowed to write product code and regression tests.
 
