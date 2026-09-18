@@ -200,7 +200,8 @@ test results, failure classifications, blocking findings, and notes.
 **Controller → Reviewer package:** approved Architect plan, original acceptance criteria, complete final Developer
 handoff, approved scope, final diff reference, complete QA result/evidence, Architect risk/blast-radius data, and
 any deterministic cross-package hits available. Reviewer reads the actual final diff, performs code review, and
-uses QA's evidence without re-running tests.
+uses QA's evidence without re-running tests. Reviewer has shell access only for non-mutating git inspection needed
+to reconstruct that diff; it must not execute tests/builds or any command that changes files, the index, or refs.
 
 ## 5d. Step 06 — Tests run: scope and failure classification
 
