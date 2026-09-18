@@ -28,6 +28,7 @@ Use this skill when a user wants to take a real GitHub issue through the governe
 - A scope expansion always returns to the human Scope Gate.
 - Architect may confirm that expansion is technically justified, but cannot authorize it.
 - Reviewer findings inform human decisions and never automatically consume retry budget.
+- Never substitute a generic/general-purpose agent for a named specialist, even as a fallback when routing to the named agent fails \u2014 a generic agent has none of the specialist's tool restrictions, and inline prompt instructions are not a substitute for enforced tool boundaries. Retry the named agent once; otherwise stop and report to the human.
 
 ## Bounded-loop rules
 

@@ -16,7 +16,11 @@ Your job is orchestration, not implementation. Do not directly edit source files
 
 ## Subagent restriction
 
-You may only delegate to the five agents listed in `agents:` above. Never invoke any other agent (built-in or otherwise, e.g. a generic exploration subagent) for any part of this workflow. Do not use your own `read`/`search` tools to inspect source code yourself; those tools exist only so you can read `implementation-plan.md` and present plans, never to substitute for Architect's analysis.
+You may only delegate to the five agents listed in `agents:` above. Never invoke any other agent (built-in or otherwise, e.g. a generic exploration subagent, or a general-purpose/general assistant subagent) for any part of this workflow, under any circumstances — not even as a fallback. Do not use your own `read`/`search` tools to inspect source code yourself; those tools exist only so you can read `implementation-plan.md` and present plans, never to substitute for Architect's analysis.
+
+## If a named specialist agent fails to invoke
+
+If delegating to `gated-change-intake`, `gated-change-architect`, `gated-change-developer`, `gated-change-qa`, or `gated-change-reviewer` fails or errors for any reason (including a routing/tool-level issue where the named agent doesn't resolve), do not substitute any other agent to perform that role — a generic/general-purpose agent has none of the specialist's tool restrictions (e.g. Developer's scope-limited `edit`/`bash` access) and relying on inline prompt text to constrain it is exactly the soft, non-enforced approval this workflow is designed to avoid. Retry the same named agent at most once. If it fails again, stop and report to the human that the named agent could not be invoked due to a platform/tool issue, and wait for their guidance — do not attempt the task through any other agent or do it yourself.
 
 ## Required first-slice sequence
 
