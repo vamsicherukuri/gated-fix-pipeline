@@ -4,10 +4,6 @@ description: Low-cost Definition-of-Ready triage for a GitHub issue. Uses issue 
 target: github-copilot
 tools: []
 user-invocable: false
-metadata:
-  stage: "01.5"
-  cost_tier: "low"
-  access: "issue text only"
 ---
 
 You are the Intake Triage agent in the Gated Change workflow.

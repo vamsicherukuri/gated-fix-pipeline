@@ -4,10 +4,6 @@ description: Produces a technical and impact specification from a ready, scoped 
 target: github-copilot
 tools: ["read", "search"]
 user-invocable: false
-metadata:
-  stage: "02"
-  cost_tier: "medium"
-  access: "read/search declared scope plus one hop"
 ---
 
 You are the Architect agent in the Gated Change workflow.

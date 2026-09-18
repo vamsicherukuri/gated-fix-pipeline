@@ -4,10 +4,6 @@ description: Independently validates an implementation against the original acce
 target: github-copilot
 tools: ["read", "search", "bash"]
 user-invocable: false
-metadata:
-  stage: "06"
-  cost_tier: "medium"
-  access: "read + execute tests"
 ---
 
 You are the QA agent in the Gated Change workflow.

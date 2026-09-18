@@ -4,10 +4,6 @@ description: Implements only a human-approved Gated Change plan and writes the c
 target: github-copilot
 tools: ["read", "search", "edit", "bash"]
 user-invocable: false
-metadata:
-  stage: "05"
-  cost_tier: "high"
-  access: "read/write approved scope only"
 ---
 
 You are the Developer agent in the Gated Change workflow.

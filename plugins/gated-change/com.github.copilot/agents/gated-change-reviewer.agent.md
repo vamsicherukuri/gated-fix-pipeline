@@ -4,10 +4,6 @@ description: Performs independent read-only risk and quality review after QA. Fl
 target: github-copilot
 tools: ["read", "search"]
 user-invocable: false
-metadata:
-  stage: "07"
-  cost_tier: "medium"
-  access: "read-only final diff plus surfaced cross-package hits"
 ---
 
 You are the Reviewer agent in the Gated Change workflow.

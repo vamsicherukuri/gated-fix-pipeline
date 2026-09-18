@@ -1,10 +1,15 @@
 name: Gated Fix Pipeline
 
-# Triggered by applying the "run-agentic-pipeline" label to an issue - see README.md
-# "Testing via GitHub Copilot App / GitHub Actions" for the end-to-end walkthrough.
+# Legacy SDK-based prototype path (src/actions/*.ts) - kept as reference/test-harness material.
+# Manual-dispatch only so it never fires automatically alongside the GitHub Copilot App plugin
+# (plugins/gated-change) during testing. Provide the issue number to run it intentionally.
 on:
-  issues:
-    types: [labeled]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: "Issue number to run the legacy SDK pipeline against"
+        required: true
+        type: number
 
 permissions:
   contents: read
@@ -16,7 +21,6 @@ env:
 
 jobs:
   intake-triage-round-1:
-    if: github.event.label.name == 'run-agentic-pipeline'
     runs-on: ubuntu-latest
     outputs:
       ready: ${{ steps.run.outputs.ready }}
@@ -28,7 +32,7 @@ jobs:
           node-version: 22
       - run: npm ci
       - id: run
-        run: npx tsx src/actions/intakeTriage.ts ${{ github.event.issue.number }} 1
+        run: npx tsx src/actions/intakeTriage.ts ${{ github.event.inputs.issue_number }} 1
 
   # implementation-plan.md §4: Intake Triage is capped at 2 rounds. This job only runs if round 1
   # came back "not ready" - each round is its own job/runner, so the handoff and each agent's
@@ -47,7 +51,7 @@ jobs:
           node-version: 22
       - run: npm ci
       - id: run
-        run: npx tsx src/actions/intakeTriage.ts ${{ github.event.issue.number }} 2
+        run: npx tsx src/actions/intakeTriage.ts ${{ github.event.inputs.issue_number }} 2
 
   architect:
     needs: [intake-triage-round-1, intake-triage-round-2]
@@ -69,7 +73,7 @@ jobs:
           if [ "${{ needs.intake-triage-round-1.outputs.ready }}" != "true" ]; then
             SCOPE="${{ needs.intake-triage-round-2.outputs.scope }}"
           fi
-          npx tsx src/actions/architect.ts ${{ github.event.issue.number }} "$SCOPE"
+          npx tsx src/actions/architect.ts ${{ github.event.inputs.issue_number }} "$SCOPE"
 
   # implementation-plan.md §5a/§5g: the Scope gate is a hard block. This job targets a protected
   # GitHub Environment with a required reviewer - the job genuinely pauses ("Waiting") until a
@@ -86,7 +90,7 @@ jobs:
         with:
           node-version: 22
       - run: npm ci
-      - run: npx tsx src/actions/scopeGateResult.ts ${{ github.event.issue.number }} approved
+      - run: npx tsx src/actions/scopeGateResult.ts ${{ github.event.inputs.issue_number }} approved
 
   scope-gate-rejected:
     needs: scope-gate
@@ -98,4 +102,4 @@ jobs:
         with:
           node-version: 22
       - run: npm ci
-      - run: npx tsx src/actions/scopeGateResult.ts ${{ github.event.issue.number }} rejected
+      - run: npx tsx src/actions/scopeGateResult.ts ${{ github.event.inputs.issue_number }} rejected
