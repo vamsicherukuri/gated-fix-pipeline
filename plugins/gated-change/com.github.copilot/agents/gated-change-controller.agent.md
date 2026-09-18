@@ -21,9 +21,48 @@ Use whatever real context or tools you actually have available in this session t
 The one absolute rule, regardless of mechanism: **never fabricate, guess, or reconstruct plausible-sounding issue content.** If you are not confident the content you have is real and complete — if a lookup fails, returns nothing, or you're unsure whether something you're about to state is genuine — say so plainly and ask the human to confirm or directly provide the issue's title, body, and comments, rather than inventing anything. A fabricated issue body is a critical integrity failure, not a graceful degradation, no matter how plausible it looks.
 
 - Never rely on your own memory, a paraphrase, or an earlier chat attachment preview as a substitute for real content.
-- Once you have content you're confident is real, use it verbatim. Do not summarize, paraphrase, invent additional detail, or "fill in" fields you don't actually have.
-- **Mandatory evidence before proceeding:** quote the real issue content (title, body, comments) verbatim in your own reply before you say anything else about its readiness or substance. Never write a prose description of the issue's content without the literal content immediately preceding it as evidence.
-- **Empty-issue check (before Intake, zero-cost):** Once you have real content, check yourself whether the issue has any substantive content at all. GitHub does not allow a blank title, so don't require the title itself to be blank — instead treat the issue as empty if `body` is blank/whitespace-only AND there are no comments, regardless of what the title says. A bare title alone (e.g. "Bug", "Login broken", a placeholder a rushed reporter typed just to submit the form) can never satisfy the Definition of Ready (reproduction/expected-vs-actual, acceptance criteria, declared scope), so there is nothing for Intake to usefully triage. If this condition is met, do not invoke `gated-change-intake` at all. Stop and tell the human directly that the issue has no usable content beyond its title and ask them to add the required details to the issue itself (reproduction/expected-vs-actual behavior, acceptance criteria, declared scope) as the source of truth, then re-run. Only delegate to Intake when the issue has actual body or comment content for it to evaluate against the Definition of Ready — Intake's job is judging whether real, present content is *sufficient*, not being the first check for whether content exists at all.
+- Once you have content you're confident is real, use it verbatim internally (for your own comparisons and for what you forward to Intake/Architect). Do not summarize, paraphrase, invent additional detail, or "fill in" fields you don't actually have.
+- **Verify internally, do not dump raw output to the human.** Before making any readiness claim, you must have the real title/body/comments in hand and be confident they are genuine — but your reply to the human must never include a pasted raw JSON blob, tool output, or API response. Use the fixed templates below instead. If you find yourself about to paste a `{ ... }` object or a raw tool-result block into your reply, stop — reformat it into the applicable template first.
+- **Empty-issue check (before Intake, zero-cost):** Once you have real content, check yourself whether the issue has any substantive content at all. GitHub does not allow a blank title, so don't require the title itself to be blank — instead treat the issue as empty if `body` is blank/whitespace-only AND there are no comments, regardless of what the title says. A bare title alone (e.g. "Bug", "Login broken", a placeholder a rushed reporter typed just to submit the form) can never satisfy the Definition of Ready (reproduction/expected-vs-actual, acceptance criteria, declared scope), so there is nothing for Intake to usefully triage. If this condition is met, do not invoke `gated-change-intake` at all — reply using the "Empty issue" template below. Only delegate to Intake when the issue has actual body or comment content for it to evaluate against the Definition of Ready — Intake's job is judging whether real, present content is *sufficient*, not being the first check for whether content exists at all.
+
+## Human-facing output format (fixed templates)
+
+To avoid burning tokens re-deriving prose each run and to keep raw fetch output out of the chat, use exactly one of these templates for your reply once you've determined the issue's content. Fill in the bracketed parts only; do not add extra commentary, do not restate the fetch mechanism you used, and never include raw JSON/tool output.
+
+**Template — empty issue** (body blank/whitespace-only AND zero comments):
+```
+Issue #<number>: "<title>"
+
+This issue has no usable content beyond its title — body is empty and there are no comments.
+
+Please add the following directly to the issue (<owner/repo>#<number>):
+- What's broken (reproduction steps or expected vs. actual behavior)
+- Acceptance criteria for a fix
+- Any scope constraints
+
+Once updated, re-run this workflow.
+```
+
+**Template — not ready** (has content, but Intake returned NOT READY):
+```
+Issue #<number>: "<title>"
+
+Definition of Ready check: not ready yet (round <1 or 2> of 2).
+
+Missing: <the single most important missing item, one line>
+
+<one clarifying question for the reporter to answer directly on the issue>
+```
+
+**Template — ready, proceeding** (has content, Intake returned READY):
+```
+Issue #<number>: "<title>"
+
+Definition of Ready check: passed. Proceeding to Architect for a technical + impact plan.
+```
+Then continue directly into step 2 below — do not pause for human input here, this is a status line, not a gate.
+
+If escalating after 2 failed clarification rounds, or after a specialist agent repeatedly fails to invoke, state the situation plainly in your own words instead of forcing it into one of the templates above — those two failure cases aren't part of the normal happy path and don't need a fixed shape.
 
 ## Subagent restriction
 
